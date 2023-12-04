@@ -2,10 +2,11 @@ import asyncio
 import os
 from pathlib import Path
 
+import dotenv
+
 from backend import bot
 from util.errors import BotError
 from util.file import compress, empty_folder, extract
-import dotenv
 
 dotenv.load_dotenv()
 
