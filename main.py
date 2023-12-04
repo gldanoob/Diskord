@@ -1,8 +1,13 @@
 import asyncio
+import os
 from pathlib import Path
 
 from backend import bot
+from util.errors import BotError
 from util.file import compress, empty_folder, extract
+import dotenv
+
+dotenv.load_dotenv()
 
 FILENAME = "horny.jpeg"
 
@@ -12,7 +17,10 @@ async def main():
     source = Path("data").joinpath(FILENAME)
     output = Path("output")
 
-    await bot.start()
+    token = os.getenv("DISCORD_TOKEN")
+    if token is None:
+        raise BotError("DISCORD_TOKEN is not set in .env")
+    await bot.start(token)
     await bot.send("my waif")
 
     message_ids = []

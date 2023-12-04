@@ -2,3 +2,4 @@ py7zr
 multivolumefile
 discord
 termcolor
+python-dotenv

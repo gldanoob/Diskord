@@ -73,8 +73,7 @@ def to_thread(func: typing.Callable):
     return wrapper
 
 
-async def start():
-    asyncio.create_task(client.start(
-        'MTE4MTAxOTE3Mjk1MjYwODgxOA.Ga51RM.vGgx_Ij_fndbEjGKW_ur3DIdgHJZV6om4z4f9E'))
+async def start(token: str):
+    asyncio.create_task(client.start(token))
     log("Waiting for bot to be ready...")
     await is_ready.wait()
