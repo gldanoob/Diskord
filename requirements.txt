@@ -1,0 +1,4 @@
+py7zr
+multivolumefile
+discord
+termcolor
