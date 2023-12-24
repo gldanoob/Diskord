@@ -2,4 +2,5 @@ py7zr
 multivolumefile
 discord
 termcolor
+aiohttp
 python-dotenv
