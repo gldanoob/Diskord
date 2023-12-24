@@ -5,8 +5,10 @@ from pathlib import Path
 import dotenv
 
 from backend import bot
+from backend.api import API, start_server
 from util.errors import BotError
 from util.file import compress, empty_folder, extract
+from util.logging import log
 
 dotenv.load_dotenv()
 
@@ -19,7 +21,14 @@ OUTPUT = Path("output")
 PASSWORD = "gay"
 
 
-async def store_file(filename: str) -> int:
+@API("/store")
+async def store_file(filename: str = "") -> int:
+    if filename == "":
+        raise BotError("EMPTY FILENAME")
+
+    if not SOURCE.joinpath(filename).exists():
+        raise BotError("FILE NOT FOUND")
+
     file_paths = compress(
         TARGET.joinpath(filename + ".7z"),
         PASSWORD,
@@ -36,28 +45,37 @@ async def store_file(filename: str) -> int:
     return thread_id
 
 
-async def retrieve_file(filename: str, thread_id: int):
-    message_ids = await bot.retrieve_ids(thread_id)
-    await bot.download_messages(thread_id, message_ids, TARGET)
+@API("/retrieve")
+async def retrieve_file(filename: str = "", thread_id: str = ""):
+    if filename == "":
+        raise BotError("EMPTY FILENAME")
+
+    if thread_id == "":
+        raise BotError("EMPTY THREAD ID")
+
+    thread_id_int = int(thread_id)
+    message_ids = await bot.retrieve_ids(int(thread_id_int))
+    await bot.download_messages(thread_id_int, message_ids, TARGET)
     extract(TARGET.joinpath(filename), PASSWORD, OUTPUT)
 
 
 async def main():
-    token = os.getenv("DISCORD_TOKEN")
-    if token is None:
-        raise BotError("DISCORD_TOKEN is not set in .env")
-    await bot.start(token)
+    try:
+        token = os.getenv("DISCORD_TOKEN")
+        if token is None:
+            raise BotError("DISCORD_TOKEN is not set in .env")
+        await bot.start(token)
 
-    empty_folder(TARGET)
-    empty_folder(OUTPUT)
+        await start_server()
 
-    # compress and send
-    thread_id = await store_file(FILENAME)
+        empty_folder(TARGET)
+        empty_folder(OUTPUT)
 
-    # download and extract
-    empty_folder(Path("generated"))
+        while True:
+            await asyncio.sleep(3600)
 
-    await retrieve_file(FILENAME, thread_id)
+    except (KeyboardInterrupt, asyncio.CancelledError) as e:
+        log("Exiting...")
 
 
 asyncio.run(main())
