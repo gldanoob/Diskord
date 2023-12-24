@@ -6,6 +6,9 @@ class BotError(Exception):
 
     def __init__(self, message: str):
         super().__init__(message)
-        self.message = message or self.__doc__
+        self.message = message
 
         log(self.message, level='ERR')
+
+    def __str__(self) -> str:
+        return self.message
