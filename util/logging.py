@@ -17,7 +17,7 @@ def indent_lines(lines, indent, indent_first=0):
     ]
 
 
-def log(*args, level='LOG', indent=False):
+def log(*args: str, level='LOG', indent=False):
     if level not in colors:
         level = 'LOG'
     date_str = datetime.datetime.now().strftime('%m/%d %H:%M:%S')
