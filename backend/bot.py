@@ -15,6 +15,8 @@ client = discord.Client(intents=intents)
 
 is_ready = asyncio.Event()
 
+STORAGE_CHANNEL = 1180990620798554215
+
 
 @client.event
 async def on_ready():
@@ -30,35 +32,67 @@ async def on_message(message):
     if message.content.startswith('$hello'):
         await message.channel.send('Hello!')
 
+# Create a thread in the storage channel with given name
 
-async def send(message: str | None = None, file: Path | None = None):
+
+async def create_thread(name: str) -> int:
     if not client.is_ready():
         raise BotError("BOT NOT READY")
 
-    channel = client.get_channel(1180990853485965475)
-    if not isinstance(channel, discord.Thread):
+    if name == "":
+        raise BotError("EMPTY THREAD NAME")
+
+    channel = client.get_channel(STORAGE_CHANNEL)
+    if not isinstance(channel, discord.ForumChannel):
+        raise BotError("CHANNEL NOT A FORUM")
+
+    log(f"Creating thread: {name}")
+    thread = await channel.create_thread(name=name, content="WAKE TF UP")
+    return thread.thread.id
+
+
+async def send(thread_id: int, message: str | None = None, file: Path | None = None) -> int:
+    if not client.is_ready():
+        raise BotError("BOT NOT READY")
+
+    thread = client.get_channel(thread_id)
+    if not isinstance(thread, discord.Thread):
         raise BotError("CHANNEL NOT A THREAD")
 
     if file is not None:
         log(f"Sending file: {file}")
-        discord_message = await channel.send(file=discord.File(file), content=message)
+        discord_message = await thread.send(file=discord.File(file), content=message)
         return discord_message.id
     elif message is not None:
         log(f"Sending message: {message}")
-        discord_message = await channel.send(message)
+        discord_message = await thread.send(message)
         return discord_message.id
+    else:
+        raise BotError("NO MESSAGE OR FILE")
 
 
-async def download_messages(message_ids: list[int], output: Path):
+# Retreive all message ids with an attachments from a thread
+async def retrieve_ids(thread_id: int) -> list[int]:
     if not client.is_ready():
         raise BotError("BOT NOT READY")
 
-    channel = client.get_channel(1180990853485965475)
-    if not isinstance(channel, discord.Thread):
+    thread = client.get_channel(thread_id)
+    if not isinstance(thread, discord.Thread):
+        raise BotError("CHANNEL NOT A THREAD")
+
+    return [m.id async for m in thread.history() if len(m.attachments) == 1]
+
+
+async def download_messages(thread_id, message_ids: list[int], output: Path):
+    if not client.is_ready():
+        raise BotError("BOT NOT READY")
+
+    thread = client.get_channel(thread_id)
+    if not isinstance(thread, discord.Thread):
         raise BotError("CHANNEL NOT A THREAD")
 
     for mid in message_ids:
-        message = await channel.fetch_message(mid)
+        message = await thread.fetch_message(mid)
         if len(message.attachments) == 0:
             raise BotError("MESSAGE HAS NO ATTACHMENTS")
 
