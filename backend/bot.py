@@ -83,7 +83,7 @@ async def retrieve_ids(thread_id: int) -> list[int]:
     return [m.id async for m in thread.history() if len(m.attachments) == 1]
 
 
-async def download_messages(thread_id, message_ids: list[int], output: Path):
+async def download_messages(thread_id: int, message_ids: list[int], output: Path):
     if not client.is_ready():
         raise BotError("BOT NOT READY")
 
