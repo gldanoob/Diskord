@@ -12,34 +12,52 @@ dotenv.load_dotenv()
 
 FILENAME = "horny.jpeg"
 
+TARGET = Path("generated")
+SOURCE = Path("data")
+OUTPUT = Path("output")
+
+PASSWORD = "gay"
+
+
+async def store_file(filename: str) -> int:
+    file_paths = compress(
+        TARGET.joinpath(filename + ".7z"),
+        PASSWORD,
+        SOURCE.joinpath(filename)
+    )
+
+    message_ids = []
+
+    thread_id = await bot.create_thread(filename)
+    for file_path in file_paths:
+        mid = await bot.send(thread_id, file=file_path)
+        message_ids.append(mid)
+
+    return thread_id
+
+
+async def retrieve_file(filename: str, thread_id: int):
+    message_ids = await bot.retrieve_ids(thread_id)
+    await bot.download_messages(thread_id, message_ids, TARGET)
+    extract(TARGET.joinpath(filename), PASSWORD, OUTPUT)
+
 
 async def main():
-    target = Path("generated").joinpath(FILENAME).with_suffix(".7z")
-    source = Path("data").joinpath(FILENAME)
-    output = Path("output")
-
     token = os.getenv("DISCORD_TOKEN")
     if token is None:
         raise BotError("DISCORD_TOKEN is not set in .env")
     await bot.start(token)
-    await bot.send("my waif")
 
-    message_ids = []
-
-    empty_folder(Path("generated"))
-    empty_folder(Path("output"))
+    empty_folder(TARGET)
+    empty_folder(OUTPUT)
 
     # compress and send
-    files = compress(target, "moan", source)
-
-    for f in files:
-        mid = await bot.send(file=Path(f))
-        message_ids.append(mid)
+    thread_id = await store_file(FILENAME)
 
     # download and extract
     empty_folder(Path("generated"))
-    await bot.download_messages(message_ids, Path("generated"))
-    extract(target, "moan", output)
+
+    await retrieve_file(FILENAME, thread_id)
 
 
 asyncio.run(main())
